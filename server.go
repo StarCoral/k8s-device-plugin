@@ -216,6 +216,7 @@ func (m *NvidiaDevicePlugin) GetDevicePluginOptions(context.Context, *pluginapi.
 
 // ListAndWatch lists devices and update that list according to the health status
 func (m *NvidiaDevicePlugin) ListAndWatch(e *pluginapi.Empty, s pluginapi.DevicePlugin_ListAndWatchServer) error {
+	log.Printf("device marked healthy: v", m.apiDevices())
 	s.Send(&pluginapi.ListAndWatchResponse{Devices: m.apiDevices()})
 
 	for {

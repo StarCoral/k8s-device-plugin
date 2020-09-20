@@ -31,6 +31,8 @@ const (
 	allHealthChecks        = "xids"
 )
 
+
+var GPUTIMES uint = 2
 // Device couples an underlying pluginapi.Device type with its device node path
 type Device struct {
 	pluginapi.Device
@@ -75,7 +77,7 @@ func NewMigDeviceManager(strategy MigStrategy, resource string) *MigDeviceManage
 		resource: resource,
 	}
 }
-var GPUTIMES uint = 2
+
 // Devices returns a list of devices from the GpuDeviceManager
 func (g *GpuDeviceManager) Devices() []*Device {
 	n, err := nvml.GetDeviceCount()
@@ -83,8 +85,8 @@ func (g *GpuDeviceManager) Devices() []*Device {
 	n *= GPUTIMES
 	var devs []*Device
 	for i := uint(0); i < n; i++ {
-		log.Printf("Device: %d created.", i)
-		d, err := nvml.NewDeviceLite(i%GPUTIMES)
+		//log.Printf("Device: %d created.", i)
+		d, err := nvml.NewDeviceLite(i%GPUTIMES) //
 		check(err)
 
 		migEnabled, err := d.IsMigEnabled()
@@ -93,8 +95,9 @@ func (g *GpuDeviceManager) Devices() []*Device {
 		if migEnabled && g.skipMigEnabledGPUs {
 			continue
 		}
-
+		
 		devs = append(devs, buildDevice(d,i))
+		log.Printf("Device: %v created.", devs)
 	}
 
 	return devs
