@@ -20,7 +20,7 @@
 
 DOCKER   ?= docker
 ifeq ($(IMAGE),)
-REGISTRY ?= nvidia
+REGISTRY ?= riyazhu
 IMAGE := $(REGISTRY)/k8s-device-plugin
 endif
 VERSION  ?= v0.7.0-rc.7
