@@ -20,6 +20,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"strconv"
 
 	"github.com/NVIDIA/gpu-monitoring-tools/bindings/go/nvml"
 
@@ -146,7 +147,7 @@ func (m *MigDeviceManager) CheckHealth(stop <-chan interface{}, devices []*Devic
 
 func buildDevice(d *nvml.Device, ind uint) *Device {
 	dev := Device{}
-	dev.ID = d.UUID
+	dev.ID = d.UUID + strconv.Itoa(int(ind))
 	dev.Health = pluginapi.Healthy
 	dev.Ind = ind
 	dev.Path = d.Path
@@ -176,6 +177,7 @@ func checkHealth(stop <-chan interface{}, devices []*Device, unhealthy chan<- *D
 
 	for _, d := range devices {
 		log.Printf("checkHealth: %v created.", d)
+		d.ID = d.ID[:len(d.ID)-1]
 		gpu, _, _, err := nvml.ParseMigDeviceUUID(d.ID)
 		if err != nil {
 			gpu = d.ID

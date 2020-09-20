@@ -267,13 +267,15 @@ func (m *NvidiaDevicePlugin) Allocate(ctx context.Context, reqs *pluginapi.Alloc
 	responses := pluginapi.AllocateResponse{}
 	for _, req := range reqs.ContainerRequests {
 		for _, id := range req.DevicesIDs {
+			id = id[:len(id)-1]
 			if !m.deviceExists(id) {
 				return nil, fmt.Errorf("invalid allocation request for '%s': unknown device: %s", m.resourceName, id)
 			}
 		}
 
 		response := pluginapi.ContainerAllocateResponse{}
-
+		log.Printf("ALLOCATE ID: %v", response)
+		
 		if *deviceListStrategyFlag == DeviceListStrategyEnvvar {
 			response.Envs = m.apiEnvs(m.deviceListEnvvar, req.DevicesIDs)
 		}
