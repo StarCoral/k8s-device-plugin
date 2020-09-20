@@ -216,7 +216,7 @@ func (m *NvidiaDevicePlugin) GetDevicePluginOptions(context.Context, *pluginapi.
 
 // ListAndWatch lists devices and update that list according to the health status
 func (m *NvidiaDevicePlugin) ListAndWatch(e *pluginapi.Empty, s pluginapi.DevicePlugin_ListAndWatchServer) error {
-	log.Printf("device marked healthy: v", m.apiDevices())
+	//log.Printf("device marked healthy: v", m.apiDevices())
 	s.Send(&pluginapi.ListAndWatchResponse{Devices: m.apiDevices()})
 
 	for {
@@ -261,30 +261,40 @@ func (m *NvidiaDevicePlugin) GetPreferredAllocation(ctx context.Context, r *plug
 	}
 	return response, nil
 }
-
+// func typeof(v interface{}) string {
+//     return fmt.Sprintf("%T", v)
+// }
 // Allocate which return list of devices.
 func (m *NvidiaDevicePlugin) Allocate(ctx context.Context, reqs *pluginapi.AllocateRequest) (*pluginapi.AllocateResponse, error) {
 	responses := pluginapi.AllocateResponse{}
+	var deviceIDscopy []string 
+	// deviceIDscopy = make()
+	deviceIDscopy = make([]string,0)
 	for _, req := range reqs.ContainerRequests {
 		for _, id := range req.DevicesIDs {
 			//id = id[:len(id)-1]
 			if !m.deviceExists(id) {
 				return nil, fmt.Errorf("invalid allocation request for '%s': unknown device: %s", m.resourceName, id)
 			}
+			id = id[:len(id)-1]
+			// log.Printf("There is id: %v",id)
+			// log.Printf(typeof(id))
+			// log.Printf(typeof(req.DevicesIDs))
+			deviceIDscopy = append(deviceIDscopy, id)
 		}
-
-		response := pluginapi.ContainerAllocateResponse{}
-		log.Printf("ALLOCATE ID: %v", response)
 		
+		response := pluginapi.ContainerAllocateResponse{}
+		log.Printf("ALLOCATE ID: %v", req)
+		log.Printf("ALLOCATE COPY: %v", deviceIDscopy)
 		if *deviceListStrategyFlag == DeviceListStrategyEnvvar {
-			response.Envs = m.apiEnvs(m.deviceListEnvvar, req.DevicesIDs)
+			response.Envs = m.apiEnvs(m.deviceListEnvvar, deviceIDscopy) //req.DevicesIDs)
 		}
 		if *deviceListStrategyFlag == DeviceListStrategyVolumeMounts {
 			response.Envs = m.apiEnvs(m.deviceListEnvvar, []string{deviceListAsVolumeMountsContainerPathRoot})
-			response.Mounts = m.apiMounts(req.DevicesIDs)
+			response.Mounts = m.apiMounts(deviceIDscopy)//req.DevicesIDs)
 		}
 		if *passDeviceSpecs {
-			response.Devices = m.apiDeviceSpecs(req.DevicesIDs)
+			response.Devices = m.apiDeviceSpecs(deviceIDscopy)//req.DevicesIDs)
 		}
 
 		responses.ContainerResponses = append(responses.ContainerResponses, &response)

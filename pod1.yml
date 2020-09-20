@@ -13,3 +13,51 @@ spec:
     resources:
       limits:
         nvidia.com/gpu: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod2
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - image: nvidia/cuda
+    name: pod1-ctr
+    command: ["sleep"]
+    args: ["100000"]
+
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod3
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - image: nvidia/cuda
+    name: pod1-ctr
+    command: ["sleep"]
+    args: ["100000"]
+
+    resources:
+      limits:
+        nvidia.com/gpu: 1
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod4
+spec:
+  restartPolicy: OnFailure
+  containers:
+  - image: nvidia/cuda
+    name: pod1-ctr
+    command: ["sleep"]
+    args: ["100000"]
+
+    resources:
+      limits:
+        nvidia.com/gpu: 1

@@ -177,15 +177,15 @@ func checkHealth(stop <-chan interface{}, devices []*Device, unhealthy chan<- *D
 
 	for _, d := range devices {
 		log.Printf("checkHealth: %v created.", d)
-		d.ID = d.ID[:len(d.ID)-1]
-		gpu, _, _, err := nvml.ParseMigDeviceUUID(d.ID)
+		var ID string = d.ID[:len(d.ID)-1]
+		gpu, _, _, err := nvml.ParseMigDeviceUUID(ID)
 		if err != nil {
-			gpu = d.ID
+			gpu = ID
 		}
 
 		err = nvml.RegisterEventForDevice(eventSet, nvml.XidCriticalError, gpu)
 		if err != nil && strings.HasSuffix(err.Error(), "Not Supported") {
-			log.Printf("Warning: %s is too old to support healthchecking: %s. Marking it unhealthy.", d.ID, err)
+			log.Printf("Warning: %s is too old to support healthchecking: %s. Marking it unhealthy.", ID, err)
 			unhealthy <- d
 			continue
 		}
@@ -221,17 +221,18 @@ func checkHealth(stop <-chan interface{}, devices []*Device, unhealthy chan<- *D
 		}
 
 		for _, d := range devices {
+			var ID string = d.ID[:len(d.ID)-1]
 			// Please see https://github.com/NVIDIA/gpu-monitoring-tools/blob/148415f505c96052cb3b7fdf443b34ac853139ec/bindings/go/nvml/nvml.h#L1424
 			// for the rationale why gi and ci can be set as such when the UUID is a full GPU UUID and not a MIG device UUID.
-			gpu, gi, ci, err := nvml.ParseMigDeviceUUID(d.ID)
+			gpu, gi, ci, err := nvml.ParseMigDeviceUUID(ID)
 			if err != nil {
-				gpu = d.ID
+				gpu = ID
 				gi = 0xFFFFFFFF
 				ci = 0xFFFFFFFF
 			}
 
 			if gpu == *e.UUID && gi == *e.GpuInstanceId && ci == *e.ComputeInstanceId {
-				log.Printf("XidCriticalError: Xid=%d on Device=%s, the device will go unhealthy.", e.Edata, d.ID)
+				log.Printf("XidCriticalError: Xid=%d on Device=%s, the device will go unhealthy.", e.Edata, ID)
 				unhealthy <- d
 			}
 		}
