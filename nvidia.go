@@ -35,6 +35,7 @@ const (
 type Device struct {
 	pluginapi.Device
 	Path string
+	Ind  uint
 }
 
 // ResourceManager provides an interface for listing a set of Devices and checking health on them
@@ -74,15 +75,16 @@ func NewMigDeviceManager(strategy MigStrategy, resource string) *MigDeviceManage
 		resource: resource,
 	}
 }
-
+var GPUTIMES uint = 2
 // Devices returns a list of devices from the GpuDeviceManager
 func (g *GpuDeviceManager) Devices() []*Device {
 	n, err := nvml.GetDeviceCount()
 	check(err)
-
+	n *= GPUTIMES
 	var devs []*Device
 	for i := uint(0); i < n; i++ {
-		d, err := nvml.NewDeviceLite(i)
+		log.Printf("Device: %d created.", i)
+		d, err := nvml.NewDeviceLite(i%GPUTIMES)
 		check(err)
 
 		migEnabled, err := d.IsMigEnabled()
@@ -92,7 +94,7 @@ func (g *GpuDeviceManager) Devices() []*Device {
 			continue
 		}
 
-		devs = append(devs, buildDevice(d))
+		devs = append(devs, buildDevice(d,i))
 	}
 
 	return devs
@@ -102,10 +104,10 @@ func (g *GpuDeviceManager) Devices() []*Device {
 func (m *MigDeviceManager) Devices() []*Device {
 	n, err := nvml.GetDeviceCount()
 	check(err)
-
+	n *= GPUTIMES
 	var devs []*Device
 	for i := uint(0); i < n; i++ {
-		d, err := nvml.NewDeviceLite(i)
+		d, err := nvml.NewDeviceLite(i%GPUTIMES)
 		check(err)
 
 		migEnabled, err := d.IsMigEnabled()
@@ -122,7 +124,7 @@ func (m *MigDeviceManager) Devices() []*Device {
 			if !m.strategy.MatchesResource(mig, m.resource) {
 				continue
 			}
-			devs = append(devs, buildDevice(mig))
+			devs = append(devs, buildDevice(mig,i))
 		}
 	}
 
@@ -139,10 +141,11 @@ func (m *MigDeviceManager) CheckHealth(stop <-chan interface{}, devices []*Devic
 	checkHealth(stop, devices, unhealthy)
 }
 
-func buildDevice(d *nvml.Device) *Device {
+func buildDevice(d *nvml.Device, ind uint) *Device {
 	dev := Device{}
 	dev.ID = d.UUID
 	dev.Health = pluginapi.Healthy
+	dev.Ind = ind
 	dev.Path = d.Path
 	if d.CPUAffinity != nil {
 		dev.Topology = &pluginapi.TopologyInfo{
@@ -169,6 +172,7 @@ func checkHealth(stop <-chan interface{}, devices []*Device, unhealthy chan<- *D
 	defer nvml.DeleteEventSet(eventSet)
 
 	for _, d := range devices {
+		log.Printf("checkHealth: %v created.", d)
 		gpu, _, _, err := nvml.ParseMigDeviceUUID(d.ID)
 		if err != nil {
 			gpu = d.ID

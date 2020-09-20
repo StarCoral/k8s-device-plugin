@@ -48,6 +48,7 @@ spec:
       containers:
       - image: riyazhu/k8s-device-plugin:v0.7.0-rc.7-ubuntu16.04 #nvidia/k8s-device-plugin:v0.7.0-rc.7
         name: riya-device-plugin-ctr
+        imagePullPolicy: Always
         args: ["--fail-on-init-error=false"]
         securityContext:
           allowPrivilegeEscalation: false
